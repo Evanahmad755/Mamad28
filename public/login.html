@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Login UCP — Indonation Roleplay</title>
+<link rel="stylesheet" href="style.css" />
+<style>
+  .discord-btn {
+    width: 100%; padding: 13px; border: none; border-radius: 6px; background: #5865F2;
+    color: #fff; font-size: 1rem; font-weight: 600; font-family: inherit; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .discord-btn:hover { filter: brightness(1.08); }
+  .or-sep { display: flex; align-items: center; gap: 10px; margin: 20px 0; color: var(--muted); font-size: .78rem; }
+  .or-sep::before, .or-sep::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.12); }
+  .manual-toggle { background: none; border: none; color: var(--muted); font-size: .82rem; text-decoration: underline; cursor: pointer; font-family: inherit; padding: 0; margin: 0 auto; display: block; }
+</style>
+</head>
+<body>
+  <div>
+    <div class="logo-wrap">
+      <img src="/assets/logo.gif" alt="Indonation Roleplay" />
+      <div class="tagline">Indonation Roleplay</div>
+    </div>
+
+    <div class="card">
+      <h1 id="cardTitle">Masuk ke UCP</h1>
+      <p class="sub" id="cardSub">Satu klik pakai akun Discord yang sudah ke-link ke UCP kamu</p>
+
+      <button type="button" class="discord-btn" id="discordLoginBtn"><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4V5z"/></svg> Masuk pakai Discord</button>
+      <p id="msg" class="msg"></p>
+
+      <div class="or-sep">atau</div>
+      <button type="button" class="manual-toggle" id="manualToggle">Masuk manual pakai Username/Password</button>
+
+      <form id="loginForm" style="display:none; margin-top:18px;">
+        <label for="ucp">Username UCP</label>
+        <input id="ucp" name="ucp" autocomplete="username" required />
+
+        <label for="password">Password</label>
+        <div class="pw-wrap">
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+          <button type="button" class="pw-eye" data-target="password"><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+
+        <button type="submit">Masuk</button>
+        <p id="manualMsg" class="msg"></p>
+      </form>
+
+      <p class="switch">Belum punya akun? <a href="register-new.html">Daftar di sini</a></p>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-col">
+      <img src="/assets/logo.gif" alt="logo" class="footer-logo" />
+      <p>Indonation Roleplay adalah komunitas SA-MP roleplay independen. Tidak berafiliasi dengan Rockstar Games atau Take-Two Interactive. Semua merek dagang milik pemiliknya masing-masing.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Link</h4>
+      <a href="https://discord.gg/x3yERrtHFF" target="_blank" rel="noopener">Discord</a>
+      <a href="login.html">UCP Login</a>
+      <a href="register-new.html">Daftar Akun</a>
+    </div>
+    <div class="footer-col">
+      <h4>Server Info</h4>
+      <span>IP: 217.216.111.29:7011</span>
+      <span>Status: Cek di Dashboard</span>
+    </div>
+  </footer>
+  <p class="copyright">&copy; 2026 Indonation Roleplay. All Rights Reserved.</p>
+
+  <script>
+    const EYE_ICON = `<svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    const EYE_OFF_ICON = `<svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.2A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a15.7 15.7 0 0 1-3.3 4.3M6.6 6.6C3.7 8.5 2 12 2 12s3.5 7 10 7c1.4 0 2.6-.3 3.7-.8"/><path d="M9.5 9.8a3 3 0 0 0 4.2 4.2"/></svg>`;
+    document.querySelectorAll('.pw-eye').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const input = document.getElementById(btn.dataset.target);
+        input.type = input.type === 'password' ? 'text' : 'password';
+        btn.innerHTML = input.type === 'password' ? EYE_ICON : EYE_OFF_ICON;
+      });
+    });
+
+    const API_BASE = '';
+    const msg = document.getElementById('msg');
+    const form = document.getElementById('loginForm');
+    const manualMsg = document.getElementById('manualMsg');
+
+    document.getElementById('discordLoginBtn').addEventListener('click', () => {
+      window.location.href = '/auth/discord/login/start';
+    });
+
+    document.getElementById('manualToggle').addEventListener('click', () => {
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Balikan dari OAuth: ?token=&ucp= (login sukses) / ?info= / ?error=
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenParam = urlParams.get('token');
+    const ucpParam = urlParams.get('ucp');
+    const infoParam = urlParams.get('info');
+    const errorParam = urlParams.get('error');
+
+    if (tokenParam) {
+      localStorage.setItem('ucp_token', tokenParam);
+      msg.textContent = `Berhasil masuk sebagai ${ucpParam}. Mengalihkan...`;
+      msg.classList.add('ok');
+      window.history.replaceState({}, '', 'login.html'); // buang token dari URL
+      setTimeout(() => (window.location.href = 'dashboard.html'), 500);
+    } else if (infoParam) {
+      msg.textContent = infoParam; msg.classList.add('ok');
+    } else if (errorParam) {
+      msg.textContent = errorParam; msg.classList.add('error');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      manualMsg.textContent = ''; manualMsg.className = 'msg';
+      const button = form.querySelector('button');
+      button.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ucp: form.ucp.value.trim(), password: form.password.value }),
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+          manualMsg.textContent = data.message || 'Login gagal.';
+          manualMsg.classList.add('error');
+          return;
+        }
+
+        localStorage.setItem('ucp_token', data.token);
+        manualMsg.textContent = `Berhasil masuk sebagai ${data.ucp}. Mengalihkan...`;
+        manualMsg.classList.add('ok');
+        setTimeout(() => (window.location.href = 'dashboard.html'), 600);
+      } catch (err) {
+        manualMsg.textContent = 'Tidak bisa menghubungi server. Coba lagi.';
+        manualMsg.classList.add('error');
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
