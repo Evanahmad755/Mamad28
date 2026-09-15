@@ -295,7 +295,7 @@ app.get('/api/me', requireAuth, async (req, res) => {
     const [chars] = await pool.query(
       `SELECT pID, Char_Name, Char_Level, Char_Skin, Char_Money, Char_BankMoney,
               Char_Job, Char_Faction, Char_Family, Char_Vip, Char_VipName, Char_Admin,
-              Char_Health, Char_Armour
+              Char_Health, Char_Armour, Char_PhoneNum, Char_PhoneOff, Char_PhoneBattery
        FROM player_characters WHERE Char_UCP = ?`,
       [req.ucpPayload.ucp]
     );
@@ -316,7 +316,8 @@ app.get('/api/me', requireAuth, async (req, res) => {
     let vehiclesByOwner = {};
     if (pIds.length > 0) {
       const [vehicles] = await pool.query(
-        `SELECT PVeh_OwnerID, PVeh_ModelID, PVeh_Plate, PVeh_Color1
+        `SELECT PVeh_OwnerID, PVeh_ModelID, PVeh_Plate, PVeh_Health, PVeh_Fuel, PVeh_Locked,
+                PVeh_Insuranced, PVeh_Impounded, PVeh_PosX, PVeh_PosY
          FROM player_vehicles WHERE PVeh_OwnerID IN (${pIds.map(() => '?').join(',')})`,
         pIds
       );
@@ -325,8 +326,28 @@ app.get('/api/me', requireAuth, async (req, res) => {
           modelId: v.PVeh_ModelID,
           modelName: vehicleName(v.PVeh_ModelID),
           plate: v.PVeh_Plate,
+          health: Math.round((v.PVeh_Health / 1000) * 100),
+          fuel: v.PVeh_Fuel,
+          locked: v.PVeh_Locked > 0,
+          insuranced: v.PVeh_Insuranced > 0,
+          impounded: v.PVeh_Impounded > 0,
+          posX: Math.round(v.PVeh_PosX),
+          posY: Math.round(v.PVeh_PosY),
         });
-      }    }
+      }
+    }
+
+    // Kontak & nomor telepon tiap karakter (fitur smartphone in-game).
+    let contactsByOwner = {};
+    if (pIds.length > 0) {
+      const [contacts] = await pool.query(
+        `SELECT contactOwner, contactName, contactNumber FROM contacts WHERE contactOwner IN (${pIds.map(() => '?').join(',')})`,
+        pIds
+      );
+      for (const c of contacts) {
+        (contactsByOwner[c.contactOwner] ||= []).push({ name: c.contactName, number: c.contactNumber });
+      }
+    }
 
     // Inventory tiap karakter (tabel `inventory`, kolom `ID` = pID karakter).
     let invByOwner = {};
@@ -358,6 +379,8 @@ app.get('/api/me', requireAuth, async (req, res) => {
       adminRank: c.Char_Admin >= 1 ? adminName(c.Char_Admin) : null,
       vehicles: vehiclesByOwner[c.pID] || [],
       inventory: invByOwner[c.pID] || [],
+      phone: { number: c.Char_PhoneNum, off: c.Char_PhoneOff > 0, battery: c.Char_PhoneBattery },
+      contacts: contactsByOwner[c.pID] || [],
     }));
 
     return res.json({
@@ -514,23 +537,6 @@ const GAME_SERVER_PORT = Number(process.env.GAME_SERVER_PORT || 7011);
 app.get('/api/server-status', async (req, res) => {
   const info = await queryServerInfo(GAME_SERVER_HOST, GAME_SERVER_PORT);
   return res.json({ ok: true, ...info });
-});
-
-// ---------- SOCIAL / TWITTER FEED (publik, baca saja) ----------
-// Nampilin feed Twitter DALAM GAME (tabel `tweets`, diisi dari fitur
-// smartphone in-game) di website — bukan sistem chat baru. Read-only,
-// sengaja tidak bisa posting baru dari website supaya gak bentrok dengan
-// state game yang lagi berjalan.
-app.get('/api/social/tweets', async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      'SELECT TwitterFrom, TwitterDate, TwitterText FROM tweets ORDER BY TwitterDate DESC LIMIT 20'
-    );
-    return res.json({ ok: true, tweets: rows });
-  } catch (err) {
-    console.error('tweets error:', err);
-    return res.status(500).json({ ok: false, message: 'Terjadi kesalahan server.' });
-  }
 });
 
 // ---------- PUSH NOTIFICATION ----------

@@ -110,6 +110,13 @@ Kalau tiga env itu dikosongin, tombol "Masuk/Daftar pakai Discord" cuma
 nampilin pesan fitur belum aktif — gak bikin error ke seluruh situs, dan
 form manual tetap bisa dipakai.
 
+## Fitur-fitur v4
+
+- **Login Discord-only** — form manual username/password dihapus dari tampilan (backend `/api/login` masih ada sebagai cadangan, tapi gak ada tombolnya di UI)
+- **Tampilan glass/frosted** ala iOS di card login & daftar (`backdrop-filter: blur`)
+- **Kendaraan bisa diklik** → modal Health/Fuel/Lokasi/Terkunci/Asuransi/Sitaan
+- **Gambar kendaraan** — dicoba dari CDN open.mp (pola sama kayak skin). Belum ada dokumentasi resmi yang mastiin endpoint ini ada — kalau gambarnya gak ketemu, otomatis fallback ke icon mobil custom
+- **Social** diganti dari Twitter jadi Nomor HP + Kontak tersimpan tiap karakter
 
 ## Fitur-fitur v3
 

@@ -99,6 +99,11 @@
   .avatar-sm span { font-size: .62rem; color: var(--muted); }
   .avatar-lg { width: 170px; height: 260px; border-radius: 8px; overflow: hidden; background: linear-gradient(160deg, #2a1013, #170709); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
   .avatar-lg img { width: 100%; height: 100%; object-fit: contain; }
+  .veh-thumb { width: 100%; height: 90px; border-radius: 6px; overflow: hidden; background: linear-gradient(160deg, #2a1013, #170709); display: flex; align-items: center; justify-content: center; }
+  .veh-thumb img { width: 100%; height: 100%; object-fit: contain; }
+  .veh-icon-fallback { width: 100%; height: 100%; align-items: center; justify-content: center; color: var(--muted); }
+  .veh-icon-fallback .icn { width: 34px; height: 34px; }
+  .veh-thumb-lg { width: 100%; max-width: 220px; height: 140px; }
 
   .char-body { flex: 1; min-width: 220px; }
   .char-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
@@ -249,11 +254,8 @@
       </section>
 
       <section class="view" id="view-social">
-        <h1 class="title"><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4V5z"/></svg> Social — Twitter Warga</h1>
-        <div class="panel">
-          <p class="empty" style="margin-top:0;">Feed ini nampilin tweet dari fitur smartphone in-game (read-only).</p>
-          <div id="tweetList"><p class="empty">Memuat...</p></div>
-        </div>
+        <h1 class="title"><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4V5z"/></svg> Social</h1>
+        <div id="socialList"><div class="skeleton"></div></div>
       </section>
 
       <section class="view" id="view-leaderboard">
@@ -378,10 +380,20 @@
     if (!token) window.location.href = 'login.html';
 
     const SKIN_CDN = 'https://assets.open.mp/assets/images/skins/';
+    // Percobaan pakai CDN open.mp buat gambar kendaraan juga (pola sama kayak
+    // skin). Belum ada dokumentasi resmi yang mastiin ini ada, jadi ada
+    // fallback ke icon mobil bikinan sendiri kalau gambarnya gak ketemu (404) —
+    // gak akan pernah tampil rusak/kosong.
+    const VEHICLE_CDN = 'https://assets.open.mp/assets/images/vehicles/';
+    const CAR_FALLBACK_ICON = '<svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 13.5L5 8.7A2 2 0 0 1 6.9 7.2h10.2A2 2 0 0 1 19 8.7l1.5 4.8"/><rect x="2" y="13.5" width="20" height="5" rx="1.5"/><circle cx="7" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></svg>';
+
     function fmtMoney(n) { return '$' + Number(n || 0).toLocaleString('en-US'); }
     function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
     function skinImg(skin) {
       return `<img src="${SKIN_CDN}${skin}.png" alt="Skin ${skin}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" /><span class="avatar-fallback" style="display:none;">Skin<br/>#${skin}</span>`;
+    }
+    function vehicleImg(modelId) {
+      return `<img src="${VEHICLE_CDN}${modelId}.png" alt="Kendaraan ${modelId}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" /><span class="veh-icon-fallback" style="display:none;">${CAR_FALLBACK_ICON}</span>`;
     }
 
     // ---- Sidebar / mobile nav ----
@@ -415,6 +427,7 @@
       renderCharacters(data.characters);
       renderVehicles(data.characters);
       renderOverviewMoney(data.characters);
+      renderSocial(data.characters);
     }
 
     function renderOverviewMoney(characters) {
@@ -522,27 +535,61 @@
     function renderVehicles(characters) {
       const box = document.getElementById('vehGrid');
       const all = characters.flatMap((c) => c.vehicles.map((v) => ({ ...v, owner: c.name })));
+      window.__allVehicles = all;
       if (all.length === 0) { box.innerHTML = '<p class="empty">Belum ada kendaraan.</p>'; return; }
-      box.innerHTML = `<div class="stat-grid">` + all.map((v) => `
-        <div class="panel" style="margin-bottom:0;">
-          <div style="font-weight:600;"><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 13.5L5 8.7A2 2 0 0 1 6.9 7.2h10.2A2 2 0 0 1 19 8.7l1.5 4.8"/><rect x="2" y="13.5" width="20" height="5" rx="1.5"/><circle cx="7" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></svg> ${esc(v.modelName)}</div>
+      box.innerHTML = `<div class="stat-grid">` + all.map((v, i) => `
+        <div class="panel veh-card" data-idx="${i}" style="margin-bottom:0; cursor:pointer;">
+          <div class="veh-thumb">${vehicleImg(v.modelId)}</div>
+          <div style="font-weight:600; margin-top:8px;">${esc(v.modelName)}</div>
           <div class="empty" style="margin:4px 0;">Plat: ${esc(v.plate)}</div>
           <div class="badge job">${esc(v.owner)}</div>
         </div>`).join('') + `</div>`;
+      box.querySelectorAll('.veh-card').forEach((el) => {
+        el.addEventListener('click', () => openVehicleModal(window.__allVehicles[Number(el.dataset.idx)]));
+      });
     }
 
-    async function loadTweets() {
-      const box = document.getElementById('tweetList');
-      try {
-        const res = await fetch('/api/social/tweets');
-        const data = await res.json();
-        if (!data.ok || data.tweets.length === 0) { box.innerHTML = '<p class="empty">Belum ada tweet.</p>'; return; }
-        box.innerHTML = data.tweets.map((t) => `
-          <div class="tweet">
-            <div class="tweet-av">${esc((t.TwitterFrom || '?')[0]).toUpperCase()}</div>
-            <div><span class="from">${esc(t.TwitterFrom)}</span><span class="date">${esc(t.TwitterDate)}</span><div class="text">${esc(t.TwitterText)}</div></div>
-          </div>`).join('');
-      } catch (err) { box.innerHTML = '<p class="empty">Gagal memuat.</p>'; }
+    function openVehicleModal(v) {
+      document.getElementById('charModalBody').innerHTML = `
+        <div class="avatar-lg veh-thumb-lg">${vehicleImg(v.modelId)}</div>
+        <h1 class="title" style="justify-content:center;">${esc(v.modelName)}</h1>
+        <p class="empty" style="text-align:center; margin-top:-8px;">Pemilik: ${esc(v.owner)} · Plat ${esc(v.plate)}</p>
+        <div class="panel" style="margin-top:16px;">
+          <h2>Status</h2>
+          <div class="bar-row">Health<span class="bar"><span style="width:${Math.max(0, Math.min(100, v.health))}%"></span></span></div>
+          <div class="bar-row">Fuel<span class="bar armour"><span style="width:${Math.max(0, Math.min(100, v.fuel))}%"></span></span></div>
+          <div class="badges" style="margin-top:10px;">
+            <span class="badge ${v.locked ? 'job' : 'family'}">${v.locked ? 'Terkunci' : 'Tidak Terkunci'}</span>
+            ${v.insuranced ? '<span class="badge faction">Diasuransikan</span>' : ''}
+            ${v.impounded ? '<span class="badge admin">Disita</span>' : ''}
+          </div>
+          <div class="money-row">Lokasi: ${v.posX}, ${v.posY}</div>
+        </div>`;
+      document.getElementById('charModalBackdrop').classList.add('show');
+    }
+
+    function renderSocial(characters) {
+      const box = document.getElementById('socialList');
+      if (characters.length === 0) { box.innerHTML = '<p class="empty">Belum ada karakter.</p>'; return; }
+      box.innerHTML = characters.map((c) => {
+        const contacts = c.contacts.length
+          ? c.contacts.map((k) => `<div class="lb-row"><div class="lb-name">${esc(k.name)}</div><div class="lb-val" style="color:var(--muted);">${esc(k.number)}</div></div>`).join('')
+          : '<p class="empty">Belum ada kontak tersimpan.</p>';
+        return `
+        <div class="panel">
+          <h2>${esc(c.name)}</h2>
+          <div class="settings-row">
+            <div>Nomor HP</div>
+            <div class="badge job">${esc(c.phone.number)}</div>
+          </div>
+          <div class="settings-row">
+            <div>Status HP</div>
+            <div class="badge ${c.phone.off ? 'family' : 'faction'}">${c.phone.off ? 'Mati' : 'Nyala'} · Baterai ${c.phone.battery}%</div>
+          </div>
+          <h2 style="margin-top:16px;">Kontak Tersimpan</h2>
+          ${contacts}
+        </div>`;
+      }).join('');
     }
 
     async function loadLeaderboard(type) {
@@ -706,7 +753,6 @@
     loadAdminList();
     loadLeaderboard('level');
     loadStaff();
-    loadTweets();
     loadTicker();
     setupPushButton();
   </script>

@@ -54,13 +54,13 @@ body {
 
 .card {
   width: min(400px, 100%);
-  background: rgba(23, 9, 11, .85);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 10px;
-  box-shadow: 0 30px 70px rgba(0,0,0,.5);
+  background: rgba(30, 12, 15, .35);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12);
   padding: 36px 32px;
-  border-top: 4px solid var(--maroon);
   opacity: 0;
   transform: translateY(16px);
   animation: cardIn .5s ease forwards;
@@ -130,3 +130,14 @@ button:disabled { opacity: .6; cursor: default; }
 .switch { margin-top: 20px; font-size: .85rem; text-align: center; color: var(--muted); }
 .switch a { color: #e0a9ad; text-decoration: none; font-weight: 600; }
 .switch a:hover { text-decoration: underline; }
+
+.discord-btn {
+  width: 100%; padding: 14px; border: none; border-radius: 14px;
+  background: rgba(88,101,242,.85); backdrop-filter: blur(10px);
+  color: #fff; font-size: 1rem; font-weight: 600; font-family: inherit; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 6px 18px rgba(88,101,242,.35), inset 0 1px 0 rgba(255,255,255,.25);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.discord-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(88,101,242,.45); }
+.discord-btn:active { transform: translateY(0); }
